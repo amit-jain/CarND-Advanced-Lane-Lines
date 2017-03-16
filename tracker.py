@@ -8,7 +8,7 @@ import cv2
 class Tracker():
     def __init__(self, window_width, window_height, margin, xm=1, ym=1, smooth_factor=15):
         # list that stores all the past (left, right) center set values used for smoothing the output
-        self.recent_center = []
+        self.recent_centers = []
 
         # the window pixel width of the center values, used to count pixels inside center windows to determine curve
         #  values
@@ -16,7 +16,7 @@ class Tracker():
 
         # the window pixel height of the center values, used to count pixels inside center windows to determine curve
         #  values. breaks the image into vertical levels
-        self.window_width = window_height
+        self.window_height = window_height
 
         # the pixel distance in both directions to slide (left_window + right_window) template for searching
         # average x values of the fitted line over the last n iterations
@@ -56,13 +56,13 @@ class Tracker():
             conv_signal = np.convolve(window, image_layer)
             # Find the best left centroid by using past left center as a reference Use window_width/2 as offset
             # because convolution signal reference is at right side of window, not center of window
-            offset = window_width / 2
-            l_min_index = int(max(l_center + offset - margin, 0))
-            l_max_index = int(min(l_center + offset + margin, warped.shape[1]))
+            offset = self.window_width / 2
+            l_min_index = int(max(l_center + offset - self.margin, 0))
+            l_max_index = int(min(l_center + offset + self.margin, warped.shape[1]))
             l_center = np.argmax(conv_signal[l_min_index:l_max_index]) + l_min_index - offset
             # Find the best right centroid by using past right center as a reference
-            r_min_index = int(max(r_center + offset - margin, 0))
-            r_max_index = int(min(r_center + offset + margin, warped.shape[1]))
+            r_min_index = int(max(r_center + offset - self.margin, 0))
+            r_max_index = int(min(r_center + offset + self.margin, warped.shape[1]))
             r_center = np.argmax(conv_signal[r_min_index:r_max_index]) + r_min_index - offset
             # Add what we found for that layer
             window_centroids.append((l_center, r_center))

@@ -16,7 +16,7 @@ distances = dist_pickle['distances']
 def abs_sobel_thresh(img, orient='x', sobel_kernel=3, thresh=(0, 255)):
     # Calculate directional gradient
     # Apply threshold
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     if orient == 'x':
         sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     else:
@@ -32,7 +32,7 @@ def abs_sobel_thresh(img, orient='x', sobel_kernel=3, thresh=(0, 255)):
 def mag_thresh(image, sobel_kernel=3, mag_thresh=(0, 255)):
     # Calculate gradient magnitude
     # Apply threshold
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
     gradmag = np.sqrt(sobelx ** 2 + sobely ** 2)
@@ -47,7 +47,7 @@ def mag_thresh(image, sobel_kernel=3, mag_thresh=(0, 255)):
 def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi / 2)):
     # Calculate gradient direction
     # Apply threshold
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
     direction = np.arctan2(sobely, sobelx)
@@ -59,14 +59,14 @@ def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi / 2)):
 def color_threshold(img, sthresh=(0, 255), vthresh=(0, 255)):
     # Convert to HLS color space
     # Apply a threshold to the S channel
-    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     s = hls[:, :, 2]
     binary_s = np.zeros_like(s)
     binary_s[(s > sthresh[0]) & (s <= sthresh[1])] = 1
 
     # Convert to HSV color space
     # Apply a threshold to the V channel
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
     v = hsv[:, :, 2]
     binary_v = np.zeros_like(v)
     binary_v[(v > vthresh[0]) & (v <= vthresh[1])] = 1
@@ -77,58 +77,42 @@ def color_threshold(img, sthresh=(0, 255), vthresh=(0, 255)):
     return output
 
 
-# def project(undist, ploty, left_fitx, right_fitx):
-#     # Create an image to draw the lines on
-#     warp_zero = np.zeros_like(warped).astype(np.uint8)
-#     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-#
-#     # Recast the x and y points into usable format for cv2.fillPoly()
-#     pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-#     pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-#     pts = np.hstack((pts_left, pts_right))
-#
-#     # Draw the lane onto the warped blank image
-#     cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
-#
-#     # Warp the blank back to original image space using inverse perspective matrix (Minv)
-#     newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
-#     # Combine the result with the original image
-#     result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
-#     plt.imshow(result)
+def color_mask(img, thresh_b=(145, 200), thresh_l=(215, 255)):
+    # Generate binary thresholded images
+    b_channel = cv2.cvtColor(img, cv2.COLOR_RGB2Lab)[:, :, 2]
+    l_channel = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)[:, :, 0]
+
+    b_binary = np.zeros_like(b_channel)
+    b_binary[(b_channel >= thresh_b[0]) & (b_channel <= thresh_b[1])] = 1
+
+    l_binary = np.zeros_like(l_channel)
+    l_binary[(l_channel >= thresh_l[0]) & (l_channel <= thresh_l[1])] = 1
+
+    combined_binary = np.zeros_like(b_binary)
+    combined_binary[(l_binary == 1) | (b_binary == 1)] = 1
+
+    return combined_binary
 
 
-def process_image(image, idx=-1):
-    # undistort the image
-    image = cv2.undistort(image, matrix, distances, None, matrix)
-
-    if idx != -1:
-        # Write the undistorted output
-        cv2.imwrite('./output_images/undistort' + str(idx) + '.jpg', image)
-
-    # Choose a Sobel kernel size
-    ksize = 3  # Choose a larger odd number to smooth gradient measurements
-
+def apply_mask(image, ksize=3, idx=-1):
     # Apply each of the thresholding functions
     gradx = abs_sobel_thresh(image, orient='x', sobel_kernel=ksize, thresh=(20, 100))
     grady = abs_sobel_thresh(image, orient='y', sobel_kernel=ksize, thresh=(20, 100))
     mag_binary = mag_thresh(image, sobel_kernel=ksize, mag_thresh=(30, 100))
     dir_binary = dir_threshold(image, sobel_kernel=ksize, thresh=(0.7, 1.3))
-    color_binary = color_threshold(image, sthresh=(100, 255), vthresh=(100, 255))
+    color_binary = color_mask(image)
+    #combined = color_binary
     combined = np.zeros_like(dir_binary)
     combined[((gradx == 1) & (grady == 1)) | ((mag_binary == 1) & (dir_binary == 1)) | (color_binary == 1)] = 255
 
-    # Plot the result
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
-    f.tight_layout()
-    ax1.imshow(image)
-    ax1.set_title('Original Image', fontsize=50)
-    ax2.imshow(combined, cmap='gray')
-    ax2.set_title('Thresholded Grad. Dir.', fontsize=50)
-    plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
-    # plt.show()
+    if idx != -1:
+        cv2.imwrite('./output_images/binary' + str(idx) + '.jpg', combined)
 
+    return combined
+
+
+def birds_eye_perspective(image, img_size):
     # Work on defining prospective transform
-    img_size = (image.shape[1], image.shape[0])
     bottom_width = 0.7
     top_width = 0.08
     height_pct = 0.62
@@ -147,23 +131,52 @@ def process_image(image, idx=-1):
 
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
-    warped = cv2.warpPerspective(combined, M, img_size, flags=cv2.INTER_LINEAR)
+    warped = cv2.warpPerspective(image, M, img_size, flags=cv2.INTER_LINEAR)
 
     if idx != -1:
         cv2.imwrite('./output_images/warped' + str(idx) + '.jpg', warped)
+
+    return M, Minv, warped
+
+
+# Input expects a RGB image
+def process_image(image, idx=-1):
+    # undistort the image
+    image = cv2.undistort(image, matrix, distances, None, matrix)
+    img_size = (image.shape[1], image.shape[0])
+
+    if idx != -1:
+        # Write the undistorted output
+        cv2.imwrite('./output_images/undistort' + str(idx) + '.jpg', image)
+
+    # Warp the image
+    M, Minv, warped = birds_eye_perspective(image, img_size)
+
+    # Apply each of the thresholding functions
+    binary = apply_mask(warped, ksize=3, idx=idx)
+
+    # # Plot the result
+    # f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
+    # f.tight_layout()
+    # ax1.imshow(output)
+    # ax1.set_title('Original Image', fontsize=50)
+    # ax2.imshow(output, cmap='gray')
+    # ax2.set_title('Thresholded Grad. Dir.', fontsize=50)
+    # plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
+    # # plt.show()
 
     window_width = 25
     window_height = 80
     tracker = Tracker(window_width=window_width, window_height=window_height, margin=25, xm=4 / 384, ym=10 / 720,
                       smooth_factor=15)
 
-    window_centroids = tracker.find_window_centroids(warped)
+    window_centroids = tracker.find_window_centroids(binary)
     # If we found any window centers
     if len(window_centroids) > 0:
 
         # Points used to draw all the left and right windows
-        l_points = np.zeros_like(warped)
-        r_points = np.zeros_like(warped)
+        l_points = np.zeros_like(binary)
+        r_points = np.zeros_like(binary)
 
         leftx = []
         rightx = []
@@ -174,8 +187,8 @@ def process_image(image, idx=-1):
             rightx.append(window_centroids[level][1])
 
             # Window_mask is a function to draw window areas
-            l_mask = window_mask(window_width, window_height, warped, window_centroids[level][0], level)
-            r_mask = window_mask(window_width, window_height, warped, window_centroids[level][1], level)
+            l_mask = window_mask(window_width, window_height, binary, window_centroids[level][0], level)
+            r_mask = window_mask(window_width, window_height, binary, window_centroids[level][1], level)
             # Add graphic points from window mask here to total pixels found
             l_points[(l_points == 255) | ((l_mask == 1))] = 255
             r_points[(r_points == 255) | ((r_mask == 1))] = 255
@@ -184,20 +197,20 @@ def process_image(image, idx=-1):
         template = np.array(r_points + l_points, np.uint8)  # add both left and right window pixels together
         zero_channel = np.zeros_like(template)  # create a zero color channle
         template = np.array(cv2.merge((zero_channel, template, zero_channel)), np.uint8)  # make window pixels green
-        warpage = np.array(cv2.merge((warped, warped, warped)),
+        warpage = np.array(cv2.merge((binary, binary, binary)),
                            np.uint8)  # making the original road pixels 3 color channels
         output = cv2.addWeighted(warpage, 1, template, 0.5, 0.0)  # overlay the orignal road image with window results
 
     # If no window centers found, just display orginal road image
     else:
-        output = np.array(cv2.merge((warped, warped, warped)), np.uint8)
+        output = np.array(cv2.merge((binary, binary, binary)), np.uint8)
 
     if idx != -1:
         # Display the final results
         cv2.imwrite('./output_images/lanemarked' + str(idx) + '.jpg', output)
 
-    yvals = range(0, warped.shape[0])
-    res_yvals = np.arange(warped.shape[0] - (window_height / 2), 0, -window_height)
+    yvals = range(0, binary.shape[0])
+    res_yvals = np.arange(binary.shape[0] - (window_height / 2), 0, -window_height)
 
     left_fit = np.polyfit(res_yvals, leftx, 2)
     left_fitx = left_fit[0] * yvals * yvals + left_fit[1] * yvals + left_fit[2]
@@ -241,18 +254,18 @@ def process_image(image, idx=-1):
                np.absolute(2 * curve_fit_cr[0])
 
     camera_center = (left_fitx[-1] + right_fitx[-1]) / 2
-    center_diff = (camera_center - warped.shape[1] / 2) * xm_per_pix
+    center_diff = (camera_center - binary.shape[1] / 2) * xm_per_pix
     side_pos = 'left'
     if center_diff <= 0:
         side_pos = 'right'
 
-    cv2.putText(result, "Curvature Radius = " + str(round(curverad, 3) + '(m)'), (50, 50),
+    cv2.putText(result, "Curvature Radius = " + str(round(curverad, 3)) + '(m)', (50, 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
     cv2.putText(result, "Distance from Center =  " + str(abs(round(center_diff, 3))) + 'm ' + side_pos + ' of center',
                 (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     if idx != -1:
-        cv2.imwrite('./output_images/tracked' + str(idx) + '.jpg', output)
+        cv2.imwrite('./output_images/tracked' + str(idx) + '.jpg', result)
 
     return result
 
@@ -261,10 +274,11 @@ images = glob.glob('./test_images/*.jpg')
 
 for idx, path in enumerate(images):
     image = cv2.imread(path)
-    process_image(image)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    process_image(image, idx)
 
-out_video = 'output1_tracked.mp4'
-in_video = 'project_video.mp4'
+out_video = 'challenge_video_tracked.mp4'
+in_video = 'challenge_video.mp4'
 
 clip1 = VideoFileClip(in_video)
 video_clip = clip1.fl_image(process_image)
