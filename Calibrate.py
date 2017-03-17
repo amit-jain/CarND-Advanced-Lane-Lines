@@ -6,9 +6,7 @@ import pickle
 
 def calibrate():
     objp = np.zeros((9 * 6, 3), np.float32)
-    print(objp.shape)
     objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2)
-    print(objp.shape)
 
     objpoints = []
     imgpoints = []

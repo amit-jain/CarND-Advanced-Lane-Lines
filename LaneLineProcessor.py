@@ -3,7 +3,11 @@ import numpy as np
 import pickle
 import glob
 
+from Calibrate import calibrate
 from LaneTracker import Tracker
+
+matrix = []
+distances = []
 
 
 def abs_sobel_thresh(img, orient='x', sobel_kernel=3, thresh=(0, 255)):
@@ -50,13 +54,6 @@ def dir_threshold(image, sobel_kernel=3, thresh=(0, np.pi / 2)):
 
 
 def color_threshold(img, thresh_b=(155, 225), thresh_l=(210, 255)):
-    s_channel = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)[:, :, 2]
-    # Threshold color channel
-    s_thresh_min = 180
-    s_thresh_max = 255
-    s_binary = np.zeros_like(s_channel)
-    s_binary[(s_channel >= s_thresh_min) & (s_channel <= s_thresh_max)] = 1
-
     # Generate binary thresholded images
     b_channel = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)[:, :, 2]
     l_channel = cv2.cvtColor(img, cv2.COLOR_BGR2LUV)[:, :, 0]
@@ -87,7 +84,9 @@ def apply_mask(image, ksize=3):
     return combined
 
 
-def birds_eye_perspective(image, img_size):
+def birds_eye_perspective(image):
+    img_size = (image.shape[1], image.shape[0])
+
     src = np.float32([[490, 482], [810, 482],
                       [1240, 720], [40, 720]])
     dst = np.float32([[0, 0], [1280, 0],
@@ -104,7 +103,6 @@ def birds_eye_perspective(image, img_size):
 def process_image(image, path=None):
     # Convert to BGR
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    img_size = (image.shape[1], image.shape[0])
 
     # Undistort the image
     dist_pickle = pickle.load(open('calibration_pickle.p', 'rb'))
@@ -115,7 +113,7 @@ def process_image(image, path=None):
         cv2.imwrite('./output_images/' + path + '_distort.jpg', image)
 
     # Warp the image
-    M, Minv, warped = birds_eye_perspective(image, img_size)
+    M, Minv, warped = birds_eye_perspective(image)
     if path:
         cv2.imwrite('./output_images/' + path + '_warped.jpg', warped)
 
@@ -127,7 +125,7 @@ def process_image(image, path=None):
     # Use a sliding window approach to find lane lines
     window_width = 20
     window_height = 120
-    tracker = Tracker(window_width=window_width, window_height=window_height, margin=15, xm=4 / 384, ym=10 / 720,
+    tracker = Tracker(window_width=window_width, window_height=window_height, margin=15, xm=4/384, ym=10/720,
                       smooth_factor=35)
 
     # Get the lane window centroids and draw them
@@ -147,6 +145,9 @@ def process_image(image, path=None):
 
     return result
 
+
+# calibrate
+calibrate()
 
 # process test images
 images = glob.glob('./test_images/*.jpg')
