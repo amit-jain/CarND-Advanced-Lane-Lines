@@ -20,6 +20,7 @@ The goals / steps of this project are the following:
 [image5]: ./output_images/binary_test.png "Binary"
 [image6]: ./output_images/tracked_test.png "Tracked"
 [image7]: ./output_images/tracked.png "Tracked Challenge"
+[image8]: ./output_images/calibration1_undistort.png "Calibration Undistort"
 [video1]: ./project_video_tracked.mp4 "Project Video"
 [video2]: ./challenge_video_tracked.mp4 "Challenge Video"
 
@@ -37,8 +38,6 @@ My project includes the following files:
 * LaneTracker.py class has methods for finding lane line centroids, curvature and visualization of images
 * video.py code to open and save videos passing each frame thought the processing pipeline
 * writeup_report.md report summarizing the results
-* output_images directory containing the output from each stage of the pipeline on test images and couple of 
-challenge video images
 
 ###Camera Calibration
 
@@ -59,7 +58,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test images using the `cv2
 .undistort()` function and obtained this result: 
 
-![image2]
+![image8]
 
 ###Pipeline (single images)
 
@@ -160,7 +159,7 @@ and [Challenge video](./challenge_video_tracked.mp4) which is a decent attempt b
 
 The pipeline worked well on the project video but still has problems with the challenge video. The problems faced 
 particularly are:
-* Many frames have missing lane markers for most of the either of the lanes (quite frequently observed in the challenge 
+* Many frames have missing lane markers for most of the eithe of the lanes (quite frequently observed in the challenge 
 video)
 * Many frames (even on the project video) have quite a few straight gradient changes which makes it hard to 
 correctly target the actual lane lines with trial and error on thresholds.

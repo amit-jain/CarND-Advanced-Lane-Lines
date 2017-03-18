@@ -20,6 +20,7 @@ The goals / steps of this project are the following:
 [image5]: ./output_images/binary_test.png "Binary"
 [image6]: ./output_images/tracked_test.png "Tracked"
 [image7]: ./output_images/tracked.png "Tracked Challenge"
+[image8]: ./output_images/calibration1_undistort.png "Calibration Undistort"
 [video1]: ./project_video_tracked.mp4 "Project Video"
 [video2]: ./challenge_video_tracked.mp4 "Challenge Video"
 
@@ -57,7 +58,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test images using the `cv2
 .undistort()` function and obtained this result: 
 
-![image2]
+![image8]
 
 ###Pipeline (single images)
 
