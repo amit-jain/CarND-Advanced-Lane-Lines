@@ -40,9 +40,9 @@ My project includes the following files:
 * video.py code to open and save videos passing each frame thought the processing pipeline
 * writeup_report.md report summarizing the results
 
-###Camera Calibration
+### Camera Calibration
 
-####1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+#### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
 The code for this step is contained in the file called `Calibrate.py` in the method `calibrate`.  
 
