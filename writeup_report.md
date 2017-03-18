@@ -25,12 +25,13 @@ The goals / steps of this project are the following:
 [video2]: ./challenge_video_tracked.mp4 "Challenge Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-###Writeup / README
+### Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
+[Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
 
 My project includes the following files:
 * LaneLineProcessor.py main class that builds the pipeline through different steps
@@ -60,21 +61,22 @@ using the `cv2.calibrateCamera()` function.  I applied this distortion correctio
 
 ![image8]
 
-###Pipeline (single images)
+### Pipeline (single images)
 
-####1. Provide an example of a distortion-corrected image.
+#### 1. Provide an example of a distortion-corrected image.
 As described above following is the example of the distortion correction applied to the test image. The 
 following screen shot shows the original image and corrected image after distortion correction:
 
 ![image2]
 
-####2. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+#### 2. Describe how (and identify where in your code) you performed a perspective transform and provide an example 
+of a transformed image.
 
 I perform perspective transformation on the main image before binary thresholding as it seemed to perform well in 
 experiments. 
 The code for my perspective transform includes a function called `birds_eye_perspective()`, which appears in lines 
-94 through 104 in the file `LaneLineProcessor.py` (./LaneLineProcessor.py).  The `perspective()` function takes as 
-input an image (`img`).  I hardcoded the source and destination points in the following manner:
+84 through 96 in the file `LaneLineProcessor.py` (./LaneLineProcessor.py).  The `birds_eye_perspective()` function takes as 
+input an image (`imgage`).  I hardcoded the source and destination points in the following manner:
 
 ```
     src = np.float32([[490, 482], [810, 482],
@@ -96,10 +98,10 @@ image and its warped counterpart to verify that the lines appear parallel in the
 
 ![image3]
 
-####3. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+#### 3. Describe how (and identify where in your code) you used color transforms, gradients or other methods to  create a thresholded binary image.  Provide an example of a binary image result.
 
 I used a combination of color and gradient thresholds to generate a binary image. The combination of thresholding is 
-done in the method `apply_mask` (Lines 80 - 91) in `LabeLineProcessor.py` (./LaneLineProcessor.py). The various other
+done in the method `apply_mask` (Lines 70 - 81) in `LabeLineProcessor.py` (./LaneLineProcessor.py). The various other
  gradient and color threshold methods are `abs_sobel_thresh`, `mag_thresh`, `dir_threshold` and  `color_threshold`.
   Here's an example of the output for this step.  (note: the first one is an image extracted from the challenge 
   video)
@@ -108,7 +110,7 @@ done in the method `apply_mask` (Lines 80 - 91) in `LabeLineProcessor.py` (./Lan
 
 ![image5]
 
-####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
 The code for identifying lane lines is in `find_window_centroids` method in the class `LaneTracker.py` (./LaneTracker
 .py).
@@ -123,13 +125,13 @@ image for visualization.
 The a second order polynomial was fit to the these identified points and a curve drawn which would depict the tracked
  lanes. 
  
-####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 The polynomial fit, the radius of curvature of the lane and the positions of the vehicle with respect to the center 
 is done in the method `curvature` in the file `LaneTracker.py` in line numbers 116 - 175.
 
 
-####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 The result of the lane identification and tracking operation is available in the following images. The first image is
  one of the test images provided and the lane tracking works quite well here. 
@@ -142,9 +144,9 @@ following image shows the lane tracking result on an extracted image from the ch
 
 ---
 
-###Pipeline (video)
+### Pipeline (video)
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 The `video.py` calls the `process_image` function of the `LaneLineProcessor` for each frame of the video and 
 constructs the video from the processed output images.
 
@@ -153,9 +155,9 @@ and [Challenge video](./challenge_video_tracked.mp4) which is a decent attempt b
 
 ---
 
-###Discussion
+### Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 The pipeline worked well on the project video but still has problems with the challenge video. The problems faced 
 particularly are:

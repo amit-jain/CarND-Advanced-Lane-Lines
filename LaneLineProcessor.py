@@ -135,7 +135,7 @@ class Processor():
 
         lanemarked, leftx, rightx = tracker.draw_rectangles(window_centroids, binary)
         if path:
-            cv2.imwrite(self.output_path + 'lanemarked' + path + '.jpg', lanemarked)
+            cv2.imwrite(self.output_path + path + '_lanemarked.jpg', lanemarked)
 
         # Track the lanes and compute curvature and position
         tracked = tracker.curvature(image, binary, leftx, rightx, Minv)
