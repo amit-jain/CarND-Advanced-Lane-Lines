@@ -6,9 +6,6 @@ import glob
 from Calibrate import calibrate
 from LaneTracker import Tracker
 
-matrix = []
-distances = []
-
 
 def abs_sobel_thresh(img, orient='x', sobel_kernel=3, thresh=(0, 255)):
     # Calculate directional gradient
@@ -90,7 +87,7 @@ def birds_eye_perspective(image):
     src = np.float32([[490, 482], [810, 482],
                       [1240, 720], [40, 720]])
     dst = np.float32([[0, 0], [1280, 0],
-                     [1160, 720], [120, 720]])
+                      [1160, 720], [120, 720]])
 
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
@@ -99,60 +96,71 @@ def birds_eye_perspective(image):
     return M, Minv, warped
 
 
-# Input expects a RGB image
-def process_image(image, path=None):
-    # Convert to BGR
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+class Processor():
+    def __init__(self):
+        # list that stores all the past (left, right) center set values used for smoothing the output
+        self.tracker = Tracker(window_width=20, window_height=120, margin=25, xm=3.7/700, ym=30/720,
+                                smooth_factor=20)
 
-    # Undistort the image
-    dist_pickle = pickle.load(open('calibration_pickle.p', 'rb'))
-    matrix = dist_pickle['matrix']
-    distances = dist_pickle['distances']
-    image = cv2.undistort(image, matrix, distances, None, matrix)
-    if path:
-        cv2.imwrite('./output_images/' + path + '_distort.jpg', image)
+        dist_pickle = pickle.load(open('calibration_pickle.p', 'rb'))
+        self.matrix = dist_pickle['matrix']
+        self.distances = dist_pickle['distances']
 
-    # Warp the image
-    M, Minv, warped = birds_eye_perspective(image)
-    if path:
-        cv2.imwrite('./output_images/' + path + '_warped.jpg', warped)
+    matrix = []
+    distances = []
+    output_path = './output_images/'
 
-    # Apply thresholding functions
-    binary = apply_mask(warped, ksize=3)
-    if path:
-        cv2.imwrite('./output_images/' + path + '_binary.jpg', binary)
+    # Input expects a RGB image
+    def process_image(self, image, path=None):
+        # Convert to BGR
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    # Use a sliding window approach to find lane lines
-    window_width = 20
-    window_height = 120
-    tracker = Tracker(window_width=window_width, window_height=window_height, margin=15, xm=4/384, ym=10/720,
-                      smooth_factor=35)
+        # Undistort the image
+        image = cv2.undistort(image, self.matrix, self.distances, None, self.matrix)
+        if path:
+            cv2.imwrite(self.output_path + path + '_distort.jpg', image)
 
-    # Get the lane window centroids and draw them
-    window_centroids = tracker.find_window_centroids(binary)
+        # Warp the image
+        M, Minv, warped = birds_eye_perspective(image)
+        if path:
+            cv2.imwrite(self.output_path + path + '_warped.jpg', warped)
 
-    lanemarked, leftx, rightx = tracker.draw_rectangles(window_centroids, binary)
-    if path:
-        cv2.imwrite('./output_images/' + path + '_lanemarked.jpg', lanemarked)
+        # Apply thresholding functions
+        binary = apply_mask(warped)
+        if path:
+            cv2.imwrite(self.output_path + path + '_binary.jpg', binary)
 
-    # Track the lanes and compute curvature and position
-    tracked = tracker.curvature(image, binary, leftx, rightx, Minv)
-    if path:
-        cv2.imwrite('./output_images/' + path + '_tracked.jpg', tracked)
+        # Get the lane window centroids and draw them
+        window_centroids = tracker.find_window_centroids(binary)
 
-    # Convert the result back to RGB
-    result = cv2.cvtColor(tracked, cv2.COLOR_BGR2RGB)
+        lanemarked, leftx, rightx = tracker.draw_rectangles(window_centroids, binary)
+        if path:
+            cv2.imwrite(self.output_path + 'lanemarked' + path + '.jpg', lanemarked)
 
-    return result
+        # Track the lanes and compute curvature and position
+        tracked = tracker.curvature(image, binary, leftx, rightx, Minv)
+        if path:
+            cv2.imwrite(self.output_path + path + '_tracked.jpg', tracked)
+
+        # Convert the result back to RGB
+        result = cv2.cvtColor(tracked, cv2.COLOR_BGR2RGB)
+
+        return result
 
 
-# calibrate
+# Calibrate the camera
 calibrate()
+
+# Initialize the processor
+processor = Processor()
 
 # process test images
 images = glob.glob('./test_images/*.jpg')
 for idx, path in enumerate(images):
+    # Initialize tracker for each image
+    tracker = Tracker(window_width=20, window_height=120, margin=35, xm=3.7/700, ym=30/720, smooth_factor=20)
+    processor.tracker = tracker
     image = cv2.imread(path)
     path = path.split('/')[2].split('.')[0]
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    process_image(image, path)
+    processor.process_image(image, path)

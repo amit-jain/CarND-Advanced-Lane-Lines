@@ -159,17 +159,17 @@ and [Challenge video](./challenge_video_tracked.mp4) which is a decent attempt b
 
 The pipeline worked well on the project video but still has problems with the challenge video. The problems faced 
 particularly are:
-* Many frames have missing lane markers for most of the eithe of the lanes (quite frequently observed in the challenge 
+* Many frames have missing lane markers for most of the either of the lanes (quite frequently observed in the challenge 
 video)
 * Many frames (even on the project video) have quite a few straight gradient changes which makes it hard to 
 correctly target the actual lane lines with trial and error on thresholds.
 
 The pipeline can be further improved in the tracker when doing sliding window convolutions where the starting point 
-is the previous detection found. Even though I added smoothing to the centroids but found it didn't quite help. There 
-are other normalization techniques that can be explored like histogram equalization etc. to further reduce the wide 
-variations in lightening and gradients to help come to better thresholds for binary image detection. The other 
-point that can be considered is explicit outlier detection and removal. Though some of the effect should have been 
-minimized with smoothing but it may not have been enough.
+is the previous detection found. Even though I added smoothing to the centroids but found it didn't quite help beyond
+a point. There are other normalization techniques that can be explored like histogram equalization etc. to further 
+reduce the wide variations in lightening and gradients to help come to better thresholds for binary image detection.
+The other point that can be considered is explicit outlier detection and removal. Though some of the effect should 
+have been minimized with smoothing but it may not have been enough.
 
 The pipeline performs very poorly in the harder challenge video and fails to take into account the sharp curves. Not 
 really sure what techniques can be applied but a place to start would be moving away from hardcoded source and 
